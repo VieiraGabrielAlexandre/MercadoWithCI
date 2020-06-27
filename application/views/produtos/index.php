@@ -1,22 +1,10 @@
-<html>
-<head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <link rel="stylesheet" href="<?= base_url("/css/bootstrap.css") ?>">
-</head>
-<body>
-    <div class="container">
-        <?php if ($this->session->flashdata("success")) :?>
-            <p class="alert alert-success"><?= $this->session->flashdata("success") ?></p>
-        <?php endif ?>
-        <?php if ($this->session->flashdata("danger")) :?>
-            <p class="alert alert-danger"><?= $this->session->flashdata("danger") ?></p>
-        <?php endif ?>
 
         <h1>Produtos</h1>
         <table class="table">
             <?php foreach($produtos as $produto) : ?>
                 <tr>
-                    <td><?= $produto["nome"]?></td>
+                    <td><?= anchor("produtos/{$produto['id']}",$produto['nome']) ?></td>
+                    <td><?= html_escape(character_limiter($produto['descricao'], 10))?></td>
                     <td><?= numeroEmReais($produto["preco"])?></td>
                 </tr>
             <?php endforeach ?>
@@ -89,6 +77,3 @@
             form_close();
             ?>
         <?php endif ?>
-    </div>
-</body>
-</html>

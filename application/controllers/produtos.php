@@ -1,14 +1,15 @@
 <?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 
     class Produtos extends CI_Controller{
-
+        public $page_title = "Produtos";
         public function index()
         {
             $this->load->model("produtos_model");
             $produtos = $this->produtos_model->buscaTodos();
-
+            $page_title = "Produtos";
             $dados = [
-                "produtos" => $produtos
+                "produtos" => $produtos,
+                "page_title" => $page_title
             ];
 
             $this->load->helper([
@@ -16,26 +17,60 @@
                 "form"
             ]);
 
-            $this->load->view("produtos/index.php", $dados);
+            $this->load->template("produtos/index.php", $dados);
         }
 
         public function formulario()
         {
-            $this->load->view("produtos/formulario");
+            autoriza();
+            $this->load->template("produtos/formulario");
         }
 
         public function novo()
         {
-            $usuarioLogado = $this->session->userdata("usuario_logado");
-            $produto = [
-                "nome" => $this->input->post("nome"),
-                "descricao" => $this->input->post("descricao"),
-                "preco" => $this->input->post("preco"),
-                "usuario_id" => $usuarioLogado['id']
-            ];
+            $usuarioLogado = autoriza();
+            $this->load->library("form_validation");
+            $this->form_validation->set_rules("nome", "nome", "min_length[2]|max_length[100]|required|nao_tenha_a_palavra_melhor");
+            $this->form_validation->set_rules("descricao","descricao","trim|min_length[10]|required");
+            $this->form_validation->set_rules("preco","preco","required");
+            $this->form_validation->set_error_delimiters("<p class='alert alert-danger'/>");
+
+            $sucesso = $this->form_validation->run();
+            if($sucesso) {
+                $produto = [
+                    "nome" => $this->input->post("nome"),
+                    "descricao" => $this->input->post("descricao"),
+                    "preco" => $this->input->post("preco"),
+                    "usuario_id" => $usuarioLogado['id']
+                ];
+                $this->load->model("produtos_model");
+                $this->produtos_model->salva($produto);
+                $this->session->set_flashdata("success", "Produto salvo com sucesso");
+                redirect('/');
+            } else {
+                $page_title = 'Produtos';
+                $dados = ['page_title' => $page_title];
+                $this->load->template("produtos/formulario", $dados);
+            }
+        }
+
+        public function mostra($id)
+        {
             $this->load->model("produtos_model");
-            $this->produtos_model->salva($produto);
-            $this->session->set_flashdata("success","Produto salvo com sucesso");
-            redirect('/');
+            $produto = $this->produtos_model->busca($id);
+            $page_title = "Produtos";
+            $dados = ['produto' => $produto, "page_title" => $page_title];
+            $this->load->template("produtos/mostra", $dados);
+        }
+
+        public function nao_tenha_a_palavra_melhor($nome)
+        {
+            $posicao = strpos($nome,"melhor");
+            if($posicao != FALSE){
+                return TRUE;
+            } else {
+                $this->form_validation->set_message("nao_tenha_a_palavra_melhor", "O campo %s nao pode conter a palavra melhor");
+                return FALSE;
+            }
         }
     }
